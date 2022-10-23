@@ -12,7 +12,7 @@ app.use(express.json())
 app.use(logger)
 
 app.get('/', (req, res) => {
-    res.send("<h1>Server running...</h1>")
+    res.send("<h1>Server running..!</h1>")
 })
 
 app.use('/api/login', loginRouter)
