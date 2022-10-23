@@ -24,3 +24,6 @@ app.use(handlerError)
 app.listen(PORT, () => {
     console.log(`Server listening on http://localhost:${PORT}`)
 })
+
+// Export the Express API
+module.exports = app;
