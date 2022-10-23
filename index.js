@@ -3,7 +3,7 @@ const { PORT } = require('./utils/config')
 const express = require('express')
 const cors = require('cors')
 const { handlerNotFound, handlerError, logger } = require('./utils/middleware')
-const loginRouter = require('./routes/LoginRouter')
+const loginRouter = require('./routes/loginRouter')
 const usersRouter = require('./routes/usersRouter')
 
 const app = express()
