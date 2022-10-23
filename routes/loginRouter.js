@@ -6,8 +6,8 @@ const { PRIVATE_KEY } = require('../utils/config')
 
 loginRouter.post('/', async (req, res, next) => {
     try {
-        const { username, password } = req.body
-        const user = await User.findOne({ username })
+        const { email, password } = req.body
+        const user = await User.findOne({ email })
         const correctPass = user === null
             ? false
             : bcrypt.compare(password, user.passwordHash)
@@ -16,11 +16,11 @@ loginRouter.post('/', async (req, res, next) => {
             next({ name: "ValidationError", message: "Incorrect password or username" })
         } else {
             const userToken = {
-                username: user.username,
+                email: user.email,
                 id: user._id
             }
             const token = await jwt.sign(userToken, PRIVATE_KEY, { expiresIn: "120s" })
-            res.status(200).json({ username, token }).end()
+            res.status(200).json({ email, token }).end()
         }
     } catch (error) {
         next(error)
