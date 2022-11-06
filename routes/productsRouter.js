@@ -11,7 +11,7 @@ productsRouter.get('/', (req, res, next) => {
         })
 })
 
-productsRouter.get('/:id', (req, res, next) => {
+productsRouter.get('/id/:id', (req, res, next) => {
     const id = req.params.id
     Product.findById(id)
         .then(product => {
@@ -26,9 +26,23 @@ productsRouter.get('/:id', (req, res, next) => {
         })
 })
 
-productsRouter.get('/:category', (req, res, next) => {
+productsRouter.get('/category/:category', (req, res, next) => {
+    const category = req.params.category    
+    Product.find({ "category.url": category })
+        .then(products => {
+            res.json({ success: true, data: products }).status(200).end()
+        })
+        .catch(err => {
+            next(err)
+        })
+})
+
+productsRouter.get('/category/:category/subcategory/:subcategory', (req, res, next) => {
     const category = req.params.category
-    Product.find({ "category": category })
+    const subcategory = req.params.subcategory
+    console.log("category", category)
+    console.log("subcategory", subcategory)
+    Product.find({ "category.url": category, "subcategory.url": subcategory })
         .then(products => {
             res.json({ success: true, data: products }).status(200).end()
         })
