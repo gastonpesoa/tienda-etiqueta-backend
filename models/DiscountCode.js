@@ -2,11 +2,11 @@ const mongoose = require('mongoose')
 const { model, Schema } = mongoose
 
 const DiscountCodeSchema = new Schema({
-    code: { type: String, required: true },
-    amount: { type: Number, required: true },
-    used: { type: Boolean, required: true },
+    code: { type: String },
+    amount: { type: Number },
+    used: { type: Boolean },
     due_date: { type: Date },
-    created_by: { type: String, required: true }
+    created_by: { type: String }
 });
 
 DiscountCodeSchema.set('toJSON', {
