@@ -37,4 +37,17 @@ discountCodesRouter.get('/code/:code', (req, res, next) => {
         });
 });
 
+discountCodesRouter.post('/', (req, res, next) => {
+    const { code, amount, used, due_date, created_by } = req.body;
+    const newDiscountCode = new DiscountCode({ code, amount, used, due_date, created_by });
+        
+    newDiscountCode.save()
+    .then((discountCode) => {
+        discountCode ? res.status(201).send(discountCode) : res.status(400).send();
+    })
+    .catch((err) => {
+        next(err);
+    });
+});
+
 module.exports = discountCodesRouter;
