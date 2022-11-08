@@ -38,7 +38,7 @@ discountCodesRouter.get('/code/:code', (req, res, next) => {
 });
 
 discountCodesRouter.post('/', (req, res, next) => {
-    res.json(req.json()).status(200).send();
+    res.status(209).send(req);
     /*const { code, amount, used, due_date, created_by } = req.body;
     const newDiscountCode = new DiscountCode({ code, amount, used, due_date, created_by });
         
