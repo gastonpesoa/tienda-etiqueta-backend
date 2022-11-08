@@ -2,7 +2,7 @@ const mongoose = require('mongoose')
 const { model, Schema } = mongoose
 
 const DiscountCodeSchema = new Schema({
-    code: { type: String, required: true },
+    code: { type: String, required: true, unique: true },
     amount: { type: Number, required: true },
     used: { type: Boolean, required: true },
     due_date: { type: Date },
