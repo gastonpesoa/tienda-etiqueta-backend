@@ -1,8 +1,8 @@
 const { connect } = require('mongoose')
-const { DB_URI } = require('../utils/config')
+const { MONGODB_URI } = require('../utils/config')
 
 const connectDb = async () => {
-    connect(DB_URI)
+    connect(MONGODB_URI)
 }
 
 connectDb()
