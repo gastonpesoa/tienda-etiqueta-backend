@@ -1,17 +1,6 @@
 const mongoose = require('mongoose')
 const { model, Schema } = mongoose
 
-const CategorySchema = new Schema({
-    name: {
-        type: String,
-        required: true
-    },
-    url: {
-        type: String,
-        required: true
-    }
-})
-
 const ProductSchema = new Schema({
     images: [String],
     title: { type: String, required: true },

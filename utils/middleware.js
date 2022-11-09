@@ -39,6 +39,7 @@ const verifyToken = async (req, res, next) => {
         req.token = bearerToken.split(' ')[1]
         try {
             const data = await jwt.verify(req.token, PRIVATE_KEY)
+            req.tokenPayload = data;
             next()
         } catch (error) {
             next(error)
