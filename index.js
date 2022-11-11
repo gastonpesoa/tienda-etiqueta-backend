@@ -6,6 +6,7 @@ const { handlerNotFound, handlerError, logger } = require('./utils/middleware')
 const loginRouter = require('./routes/loginRouter')
 const usersRouter = require('./routes/usersRouter')
 const productsRouter = require('./routes/productsRouter')
+const ordersRouter = require('./routes/ordersRouter')
 const discountCodesRouter = require('./routes/discountCodesRouter')
 
 const app = express()
@@ -20,6 +21,7 @@ app.get('/', (req, res) => {
 app.use('/api/login', loginRouter)
 app.use('/api/users', usersRouter)
 app.use('/api/products', productsRouter)
+app.use('/api/orders', ordersRouter)
 app.use('/api/discountCodes', discountCodesRouter)
 
 app.use(handlerNotFound)

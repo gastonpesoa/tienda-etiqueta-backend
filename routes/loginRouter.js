@@ -7,20 +7,29 @@ const { PRIVATE_KEY } = require('../utils/config')
 loginRouter.post('/', async (req, res, next) => {
     try {
         const { email, password } = req.body
-        const user = await User.findOne({ email })
-        const correctPass = user === null
+        const userFinded = await User.findOne({ email })
+        const correctPass = userFinded === null
             ? false
-            : bcrypt.compare(password, user.password_hash)
+            : bcrypt.compare(password, userFinded.password_hash)
 
-        if (!(user && correctPass)) {
+        if (!(userFinded && correctPass)) {
             next({ name: "ValidationError", message: "Incorrect password or username" })
         } else {
             const userToken = {
-                email: user.email,
-                id: user._id
+                email: userFinded.email,
+                id: userFinded._id
             }
-            const token = await jwt.sign(userToken, PRIVATE_KEY, { expiresIn: "120s" })
-            res.status(200).json({ email, token }).end()
+            const user = {
+                name: userFinded.name,
+                last_name: userFinded.last_name,
+                email: userFinded.email,
+                address: userFinded.address,
+                city: userFinded.city,
+                state: userFinded.state,
+                postal_code: userFinded.postal_code
+            }
+            const token = await jwt.sign(userToken, PRIVATE_KEY, { expiresIn: "7d" })
+            res.status(200).json({ success: true, data: { user, token, } }).end()
         }
     } catch (error) {
         next(error)
