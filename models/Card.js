@@ -2,11 +2,11 @@ const mongoose = require('mongoose')
 const { model, Schema } = mongoose
 
 const CardSchema = new Schema({
-    type: { type: String, required: true },
-    number: { type: Number, required: true },
-    titular: { type: String, required: true },
-    due_date: { type: String, required: true },
-    cvc: { type: Number, required: true }
+    type: { type: String },
+    number: { type: Number },
+    titular: { type: String },
+    due_date: { type: String },
+    cvc: { type: Number }
 })
 
 CardSchema.set('toJSON', {
