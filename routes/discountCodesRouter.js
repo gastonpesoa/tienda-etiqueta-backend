@@ -42,9 +42,8 @@ discountCodesRouter.get('/code/:code', (req, res, next) => {
 // Marca un código como usado
 discountCodesRouter.put('/code/:code', (req, res, next) => {
     const { code } = req.params;
-    const discountCodeToEdit = { code };
   
-    DiscountCode.findByIdAndUpdate(id, discountCodeToEdit, { new: false })
+    DiscountCode.findOneAndUpdate({ "code": code }, { "used": true })
     .then((discountCode) => {
         discountCode ? res.status(200).json(discountCode) : res.status(404).end();
     })
@@ -78,6 +77,19 @@ discountCodesRouter.put('/id/:id', (req, res, next) => {
         discountCode ? res.status(200).json(discountCode) : res.status(404).end();
     })
     .catch(err => {
+        next(err);
+    });
+});
+
+// Elimina un código
+discountCodesRouter.delete("/id/:id", (req, res, next) => {
+    const { id } = req.params;
+  
+    DiscountCode.findByIdAndRemove(id)
+    .then((obj) => {
+        obj ? res.status(200).json(obj) : res.status(404).end();
+    })
+    .catch((err) => {
         next(err);
     });
 });
