@@ -12,8 +12,8 @@ banksRouter.get('/', (req, res, next) => {
 });
 
 // Trae bancos con promociones vigentes
-banksRouter.get('/valid/', (req, res, next) => {
-    Bank.find({ "discount_status": true })
+banksRouter.get('/valid/', (req, res, next) => {    
+    Bank.find({ "discount_status": true, "discount": { "$gt": 0 } })
         .then(objs => {
             res.json({ success: true, data: objs }).status(200).end();
         })

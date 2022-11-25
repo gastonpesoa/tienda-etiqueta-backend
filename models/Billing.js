@@ -10,8 +10,7 @@ const BillingSchema = new Schema({
     city: { type: String, required: true },
     state: { type: String, required: true },
     postal_code: { type: Number, required: true },
-    cost: { type: Number, required: true },
-    state: { type: String, required: true }
+    cost: { type: Number, required: true }
 })
 
 BillingSchema.set('toJSON', {
@@ -19,7 +18,6 @@ BillingSchema.set('toJSON', {
         billingToJSON.id = billingToJSON._id.toString()
         delete billingToJSON._id
         delete billingToJSON.__v
-        delete billingToJSON.passwordHash
     })
 })
 
