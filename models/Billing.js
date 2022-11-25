@@ -10,7 +10,8 @@ const BillingSchema = new Schema({
     city: { type: String, required: true },
     state: { type: String, required: true },
     postal_code: { type: Number, required: true },
-    cost: { type: Number, required: true }
+    cost: { type: Number, required: true },
+    shipping_cost: { type: Number, required: true }
 })
 
 BillingSchema.set('toJSON', {

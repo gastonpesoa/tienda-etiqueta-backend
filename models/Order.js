@@ -6,13 +6,14 @@ const Billing = require("../models/Billing")
 const Card = require("../models/Card")
 
 const OrderSchema = new Schema({
+    date: { type: Date, required: true },
     user: { type: User.schema, required: true },
     billing: { type: Billing.schema, required: true },
     delivery_method: { type: String, required: true },
     payment_method: { type: String, required: true },
     card: { type: Card.schema },
     items: [{
-        product_id: { type: String, required: true },
+        product: { type: Product.schema, required: true },
         units: { type: Number, required: true },
     }],
     order_notes: { type: String },
