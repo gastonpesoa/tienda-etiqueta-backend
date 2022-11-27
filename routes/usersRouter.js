@@ -6,13 +6,13 @@ const { PRIVATE_KEY } = require('../utils/config')
 
 usersRouter.post('/', async (req, res, next) => {
     try {
-        const { name, last_name, email, password, address, city, state, postal_code } = req.body
+        const { name, last_name, email, password, address, city, province, postal_code } = req.body
         const saltRounds = 10
         if (password.length < 8) {
             next({ name: "ValidationError", message: "La contraseña debe tener 8 caracteres como mínimo" })
         } else {
             const password_hash = await bcrypt.hash(password, saltRounds)
-            const newUser = new User({ name, last_name, email, address, city, state, postal_code, password_hash })
+            const newUser = new User({ name, last_name, email, address, city, province, postal_code, password_hash })
             const userSaved = await newUser.save(newUser)
             const user = {
                 name: userSaved.name,
@@ -20,7 +20,7 @@ usersRouter.post('/', async (req, res, next) => {
                 email: userSaved.email,
                 address: userSaved.address,
                 city: userSaved.city,
-                state: userSaved.state,
+                province: userSaved.province,
                 postal_code: userSaved.postal_code
             }
             const userToken = {
@@ -33,6 +33,63 @@ usersRouter.post('/', async (req, res, next) => {
     } catch (error) {
         console.log(error)
         next(error)
+    }
+})
+
+usersRouter.put('/', async (req, res, next) => {
+        
+    const bearerToken = req.headers['authorization']
+    if (typeof bearerToken === 'undefined') {
+        next({ name: "ErrorToken", message: "No token" })
+    } 
+    
+    try {
+        req.token = bearerToken.split(' ')[1]
+        const userData = jwt.verify(req.token, PRIVATE_KEY)      
+        const {
+            name,
+            last_name,
+            email,
+            telephone,
+            address,
+            city,
+            province,
+            postal_code
+        } = req.body
+        const infoUser = {}
+        if (name) {
+            infoUser.name = name
+        }
+        if (last_name) {
+            infoUser.last_name = last_name
+        }
+        if (email) {
+            infoUser.email = email
+        }
+        if (telephone) {
+            infoUser.telephone = telephone
+        }
+        if (address) {
+            infoUser.address = address
+        }
+        if (city) {
+            infoUser.city = city
+        }
+        if (province) {
+            infoUser.province = province
+        }
+        if (postal_code) {
+            infoUser.postal_code = postal_code
+        }
+        var userUpdated = await User.findByIdAndUpdate(userData.id, infoUser, { new: true })
+        if (userUpdated) {
+            res.json({ success: true, data: userUpdated }).status(204).end()
+        } else {
+            res.json({ success: false, data: 'User not found' }).status(404).end()
+        }
+    } catch (error) {
+        console.log(`err`, err)
+        next(err)
     }
 })
 

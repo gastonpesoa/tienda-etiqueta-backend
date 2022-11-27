@@ -8,7 +8,7 @@ const BillingSchema = new Schema({
     address: { type: String, required: true },
     telephone: { type: Number, required: true },
     city: { type: String, required: true },
-    state: { type: String, required: true },
+    province: { type: String, required: true },
     postal_code: { type: Number, required: true },
     cost: { type: Number, required: true },
     shipping_cost: { type: Number, required: true }

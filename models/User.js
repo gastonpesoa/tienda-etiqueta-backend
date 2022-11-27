@@ -7,8 +7,9 @@ const UserSchema = new Schema({
     email: { type: String, required: true },
     address: { type: String, required: true },
     city: { type: String, required: true },
-    state: { type: String, required: true },
+    province: { type: String, required: true },
     postal_code: { type: Number, required: true },
+    telephone: { type: Number },
     password_hash: { type: String, required: true }
 })
 

@@ -15,6 +15,7 @@ const OrderSchema = new Schema({
     items: [{
         product: { type: Product.schema, required: true },
         units: { type: Number, required: true },
+        size: { type: String, required: true }
     }],
     order_notes: { type: String },
     state: { type: String, required: true }
