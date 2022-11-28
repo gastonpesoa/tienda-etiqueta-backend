@@ -129,6 +129,7 @@ ordersRouter.post('/', async (req, res, next) => {
         console.log("card", card)
         const order = new Order({
             date: Date.now(),
+            last_update_date: Date.now(),
             user: userFinded,
             billing: billing,
             delivery_method: delivery_method,

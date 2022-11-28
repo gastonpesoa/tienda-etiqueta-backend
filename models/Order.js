@@ -7,6 +7,7 @@ const Card = require("../models/Card")
 
 const OrderSchema = new Schema({
     date: { type: Date, required: true },
+    last_update_date: { type: Date, required: true },
     user: { type: User.schema, required: true },
     billing: { type: Billing.schema, required: true },
     delivery_method: { type: String, required: true },
