@@ -60,9 +60,15 @@ ordersRouter.post('/', async (req, res, next) => {
             order_notes, items
         } = req.body;
         let products = []
-        let subtotal = 0
-        let totalDiscount = 0
+
+        let discountCode = null
+        let discountBank = null
+        let discountBankAmount = 0
+        let totalDiscounts = 0
+        let subtotalCost = 0
         let shippingCost = 0
+        let totalCost = 0
+
         const user = req.tokenPayload;
         const userFinded = await User.findById(user.id)
         const productsIds = items.map(item => mongoose.Types.ObjectId(item.product_id))
@@ -73,27 +79,29 @@ ordersRouter.post('/', async (req, res, next) => {
         console.log("productsFinded", productsFinded)
         items.forEach(element => {
             let product = productsFinded.find(x => x._id.toString() === element.product_id);
-            subtotal += product.price * element.units
+            subtotalCost += product.price * element.units
             products.push({ product: product, units: element.units, size: element.size })
         });
-        console.log('subtotal', subtotal)
+        console.log('subtotal', subtotalCost)
         if (bank_id) {
             const bank = await Bank.findById(bank_id)
             if (bank?.discount_status) {
                 console.log('bank', bank)
+                discountBank = bank
                 let percentage = bank.discount / 100
-                totalDiscount += subtotal * percentage
+                discountBankAmount = subtotalCost * percentage
             }
         }
         if (discount_code) {
-            const discountCode = await DiscountCode.findOne({ "code": discount_code, "used": false })
-            if (discountCode) {
-                console.log('discountCode', discountCode)
-                totalDiscount += discountCode.amount
+            const discountCodeFinded = await DiscountCode.findOne({ "code": discount_code, "used": false })
+            if (discountCodeFinded) {
+                console.log('discountCodeFinded', discountCodeFinded)
+                discountCode = discountCodeFinded
                 await DiscountCode.findOneAndUpdate({ "code": discount_code }, { "used": true })
             }
         }
-        console.log('totalDiscount', totalDiscount)
+        totalDiscounts = discountCode?.amount + discountBankAmount
+        console.log('totalDiscounts', totalDiscounts)
         if (delivery_method === 'Envío a domicilio') {
             const provinceFinded = await Province.findOne({ "value": province })
             if (provinceFinded) {
@@ -102,8 +110,8 @@ ordersRouter.post('/', async (req, res, next) => {
             }
         }
 
-        const total = subtotal + shippingCost - totalDiscount
-        console.log('total', total)
+        totalCost = subtotalCost + shippingCost - totalDiscounts
+        console.log('totalCost', totalCost)
         const billing = new Billing({
             name: name,
             last_name: last_name,
@@ -113,11 +121,17 @@ ordersRouter.post('/', async (req, res, next) => {
             city: city,
             province: province,
             postal_code: postal_code,
-            cost: total,
-            shipping_cost: shippingCost
+            discount_code: discountCode,
+            discount_bank: discountBank,
+            discount_bank_amount: discountBankAmount,
+            total_discounts: totalDiscounts,
+            subtotal_cost: subtotalCost,
+            shipping_cost: shippingCost,
+            total_cost: totalCost
         })
         console.log("billing", billing)
-        const card = payment_method !== 'cash'
+        console.log("payment_method", payment_method)
+        const card = payment_method !== 'Pago en el local'
             ? new Card({
                 type: payment_method,
                 number: card_number,

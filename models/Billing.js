@@ -1,4 +1,6 @@
 const mongoose = require('mongoose')
+const DiscountCode = require("../models/DiscountCode")
+const Bank = require("../models/Bank")
 const { model, Schema } = mongoose
 
 const BillingSchema = new Schema({
@@ -10,8 +12,13 @@ const BillingSchema = new Schema({
     city: { type: String, required: true },
     province: { type: String, required: true },
     postal_code: { type: Number, required: true },
-    cost: { type: Number, required: true },
-    shipping_cost: { type: Number, required: true }
+    discount_code: { type: DiscountCode.schema },
+    discount_bank: { type: Bank.schema },
+    discount_bank_amount: { type: Number },
+    total_discounts: { type: Number },
+    subtotal_cost: { type: Number, required: true },
+    shipping_cost: { type: Number },
+    total_cost: { type: Number, required: true }
 })
 
 BillingSchema.set('toJSON', {
