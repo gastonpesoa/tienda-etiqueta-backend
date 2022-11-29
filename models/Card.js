@@ -3,10 +3,10 @@ const { model, Schema } = mongoose
 
 const CardSchema = new Schema({
     type: { type: String },
-    number: { type: Number },
+    number: { type: String },
     titular: { type: String },
     due_date: { type: String },
-    cvc: { type: Number }
+    cvc: { type: String }
 })
 
 CardSchema.set('toJSON', {

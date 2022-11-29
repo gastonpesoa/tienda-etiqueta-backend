@@ -133,7 +133,7 @@ ordersRouter.post('/', async (req, res, next) => {
         console.log("payment_method", payment_method)
         const card = payment_method !== 'Pago en el local'
             ? new Card({
-                type: payment_method,
+                type: discountBank.bank,
                 number: card_number,
                 titular: titular,
                 due_date: due_date,
