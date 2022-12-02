@@ -5,6 +5,7 @@ const Product = require("../models/Product")
 productsRouter.get('/', (req, res, next) => {
     Product.find({})
         .then(products => {
+            console.log("product finded", products)
             res.json({ success: true, data: products }).status(200).end()
         })
         .catch(err => {
@@ -12,19 +13,18 @@ productsRouter.get('/', (req, res, next) => {
         })
 })
 
-productsRouter.get('/id/:id', (req, res, next) => {
+productsRouter.get('/:id', async (req, res, next) => {
     const id = req.params.id
-    Product.findById(id)
-        .then(product => {
-            if (product) {
-                res.json({ success: true, data: product }).status(200).end()
-            } else {
-                res.json({ success: false, data: 'Product not found' }).status(404).end()
-            }
-        })
-        .catch(err => {
-            next(err)
-        })
+    try {
+        let product = await Product.findById(id)
+        if (product) {
+            res.json({ success: true, data: product }).status(200).end()
+        } else {
+            res.json({ success: false, data: 'Product not found' }).status(404).end()
+        }
+    } catch (error) {
+        next(error)
+    }
 })
 
 productsRouter.get('/category/:category', (req, res, next) => {
@@ -45,6 +45,7 @@ productsRouter.get('/category/:category/subcategory/:subcategory', (req, res, ne
     console.log("subcategory", subcategory)
     Product.find({ "category.url": category, "subcategory.url": subcategory })
         .then(products => {
+            console.log("product finded", products)
             res.json({ success: true, data: products }).status(200).end()
         })
         .catch(err => {

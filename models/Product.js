@@ -16,17 +16,25 @@ const ProductSchema = new Schema({
     },
     subcategory: { name: { type: String }, url: { type: String } },
     description: { type: String, required: true },
+    detail: { type: String, required: true },
     price: { type: Number, required: true },
     brand: { type: String, required: true },
     color: { type: String, required: true },
+    gender: { type: String, required: true },
     rating_average: { type: Number },
-    stock: { type: Number, required: true },
     cut: { type: String },
-    sizes: [String],
+    articles: [
+        new Schema({
+            sku: String,
+            stock: Number,
+            size: String
+        })
+    ],
     reviews: [
         new Schema({
             rating: Number,
-            review: String
+            review: String,
+            user_id: String
         })
     ]
 })

@@ -76,10 +76,21 @@ ordersRouter.post('/', async (req, res, next) => {
         ])
         console.log("productsFinded", productsFinded)
 
-        items.forEach(element => {
+        items.forEach(async element => {
+
             let product = productsFinded.find(x => x._id.toString() === element.product_id);
-            subtotalCost += product.price * element.units
-            products.push({ product: product, units: element.units, size: element.size })
+            let stockUpdated = product.stock - element.units
+
+            let data = await Product.findOneAndUpdate(
+                { "_id": mongoose.Types.ObjectId(product._id) },
+                { "stock": stockUpdated },
+                { new: true }
+            )
+
+            if (data) {
+                subtotalCost += product.price * element.units
+                products.push({ product: product, units: element.units, size: element.size })
+            }
         });
         totalCost = subtotalCost
         console.log('subtotal', subtotalCost)
