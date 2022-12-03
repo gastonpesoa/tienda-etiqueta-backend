@@ -60,7 +60,6 @@ ordersRouter.get('/all/', async (req, res, next) => {
                     date: 1,
                     state: 1,
                     "items.product.title": 1,
-                    "items.product.size": 1,
                     "items.units": 1
                 }
             }
