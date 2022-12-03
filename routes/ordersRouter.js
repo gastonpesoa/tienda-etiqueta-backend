@@ -51,6 +51,28 @@ ordersRouter.get('/:id', (req, res, next) => {
         })
 })
 
+ordersRouter.get('/all/', async (req, res, next) => {
+    try {
+        const orders = await Order.aggregate([
+            {
+                $project: {
+                    "user._id": 1,
+                    date: 1,
+                    state: 1,
+                    "items.product.title": 1,
+                    "items.product.size": 1,
+                    "items.units": 1
+                }
+            }
+        ])
+        res.status(201).json({ success: true, data: orders }).end()
+
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
 ordersRouter.post('/', async (req, res, next) => {
     try {
 
