@@ -70,30 +70,31 @@ ordersRouter.post('/', async (req, res, next) => {
         const user = req.tokenPayload;
         const userFinded = await User.findById(user.id)
 
-        const productsIds = items.map(item => mongoose.Types.ObjectId(item.product_id))
+        const productsSkus = items.map(item => item.product_sku)
         const productsFinded = await Product.aggregate([
-            { "$match": { "_id": { "$in": productsIds } } }
+            { $unwind: "$articles" },
+            { $match: { "articles.sku": { "$in": productsSkus } } }
         ])
-        console.log("productsFinded", productsFinded)
 
-        items.forEach(async element => {
+        items.map(item => {
+            let product = productsFinded.find(x => x.articles.sku === item.product_sku);
+            Product.findById(product._id)
+                .then(prod => {
+                    let article = prod.articles.find(x => x.sku === item.product_sku)
+                    article.stock -= item.units
+                    prod.save()
+                }).catch(err => {
+                    console.log("err", err)
+                })
+        })
 
-            let product = productsFinded.find(x => x._id.toString() === element.product_id);
-            let stockUpdated = product.stock - element.units
+        items.map(item => {
+            let product = productsFinded.find(x => x.articles.sku === item.product_sku);
+            subtotalCost += product.price * item.units
+            products.push({ product: product, units: item.units })
+        })
 
-            let data = await Product.findOneAndUpdate(
-                { "_id": mongoose.Types.ObjectId(product._id) },
-                { "stock": stockUpdated },
-                { new: true }
-            )
-
-            if (data) {
-                subtotalCost += product.price * element.units
-                products.push({ product: product, units: element.units, size: element.size })
-            }
-        });
         totalCost = subtotalCost
-        console.log('subtotal', subtotalCost)
 
         const billing = new Billing({
             name: name,
@@ -110,7 +111,6 @@ ordersRouter.post('/', async (req, res, next) => {
         if (bank_id) {
             const bankFinded = await Bank.findById(bank_id)
             if (bankFinded?.discount_status) {
-                console.log('bankFinded', bankFinded)
                 bank = bankFinded
                 billing.discount_bank = bankFinded.bank
                 let discountBankAmount = subtotalCost * (bankFinded.discount / 100)
@@ -122,7 +122,6 @@ ordersRouter.post('/', async (req, res, next) => {
         if (discount_code) {
             const discountCodeFinded = await DiscountCode.findOne({ "code": discount_code, "used": false })
             if (discountCodeFinded) {
-                console.log('discountCodeFinded', discountCodeFinded)
                 billing.discount_code = discountCodeFinded.code
                 billing.discount_code_amount = discountCodeFinded.amount
                 totalCost -= discountCodeFinded.amount
@@ -136,24 +135,10 @@ ordersRouter.post('/', async (req, res, next) => {
                 shippingCost = provinceFinded.shippingCost
                 billing.shipping_cost = shippingCost
                 totalCost += shippingCost
-                console.log('shippingCost', shippingCost)
             }
         }
 
         billing.total_cost = totalCost
-        console.log("billing", billing)
-
-        console.log("payment_method", payment_method)
-        const card = payment_method === 'Tarjeta de crédito'
-            ? new Card({
-                type: bank?.bank,
-                number: card_number,
-                titular: titular,
-                due_date: due_date,
-                cvc: cvc
-            })
-            : null
-        console.log("card", card)
 
         const order = new Order({
             date: Date.now(),
@@ -162,12 +147,22 @@ ordersRouter.post('/', async (req, res, next) => {
             billing: billing,
             delivery_method: delivery_method,
             payment_method: payment_method,
-            card: card,
             items: products,
             order_notes: order_notes,
             state: 'CONFIRMADA'
         })
-        console.log("order", order)
+
+        if (payment_method === 'Tarjeta de crédito') {
+            order.card = new Card({
+                type: bank?.bank,
+                number: card_number,
+                titular: titular,
+                due_date: due_date,
+                cvc: cvc
+            })
+        }
+
+        // console.log("order", order)
 
         const orderSaved = await order.save(order)
         res.status(201).json({ success: true, data: orderSaved }).end()
