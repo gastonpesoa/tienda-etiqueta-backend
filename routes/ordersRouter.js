@@ -36,22 +36,7 @@ ordersRouter.get('/', async (req, res, next) => {
     }
 })
 
-ordersRouter.get('/:id', (req, res, next) => {
-    const id = req.params.id
-    Order.findById(id)
-        .then(order => {
-            if (order) {
-                res.json({ success: true, data: order }).status(200).end()
-            } else {
-                res.json({ success: false, data: 'Order not found' }).status(404).end()
-            }
-        })
-        .catch(err => {
-            next(err)
-        })
-})
-
-ordersRouter.get('/all/', async (req, res, next) => {
+ordersRouter.get('/all', async (req, res, next) => {
     try {
         const orders = await Order.aggregate([
             {
@@ -70,6 +55,21 @@ ordersRouter.get('/all/', async (req, res, next) => {
         console.log(error)
         next(error)
     }
+})
+
+ordersRouter.get('/:id', (req, res, next) => {
+    const id = req.params.id
+    Order.findById(id)
+        .then(order => {
+            if (order) {
+                res.json({ success: true, data: order }).status(200).end()
+            } else {
+                res.json({ success: false, data: 'Order not found' }).status(404).end()
+            }
+        })
+        .catch(err => {
+            next(err)
+        })
 })
 
 ordersRouter.post('/', async (req, res, next) => {
