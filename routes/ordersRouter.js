@@ -194,4 +194,18 @@ ordersRouter.post('/', async (req, res, next) => {
     }
 })
 
+ordersRouter.put('/state/:id', (req, res, next) => {
+    const { id } = req.params;
+    const { state } = req.body;
+    const orderToEdit = { state };
+  
+    Order.findByIdAndUpdate(id, orderToEdit, { new: true })
+    .then((obj) => {
+        obj ? res.status(200).json(obj) : res.status(404).end();
+    })
+    .catch(err => {
+        next(err);
+    });
+})
+
 module.exports = ordersRouter
