@@ -130,31 +130,31 @@ productsRouter.put('/review', async (req, res, next) => {
             req.token = bearerToken.split(' ')[1]
             const user = await jwt.verify(req.token, PRIVATE_KEY)
             const userFinded = await User.findById(mongoose.Types.ObjectId(user.id))
-            console.log("order_id", order_id)
             let productFinded = await Product.findById(mongoose.Types.ObjectId(product_id))
             let orderFinded = await Order.findById(mongoose.Types.ObjectId(order_id))
-            if (!productFinded || !orderFinded) {
-                next({ name: "ReferenceError", message: "No product" })
-            }
-            if (!productFinded.reviews) {
-                productFinded.reviews = []
-            }
-            const newReview = { date: Date.now(), review: opinion, rating: rate, user_id: user.id }
-            productFinded.reviews.push(newReview)
-            const ratingAverage = productFinded.reviews.reduce((total, next) => total + next.rating, 0) / productFinded.reviews.length;
-            productFinded.rating_average = ratingAverage
-            orderFinded.items.map(item => {
-                if (item.product._id.toString() === product_id) {
-                    if (!item.product.reviews) {
-                        item.product.reviews = []
-                    }
-                    item.product.reviews.push(newReview)
-                    item.product.rating_average = ratingAverage
+            if (!productFinded || !orderFinded || productFinded.reviews.some(review => review.user_id === user.id)) {
+                next({ name: "ValidationError", message: "Operación inválida" })
+            } else {
+                if (!productFinded.reviews) {
+                    productFinded.reviews = []
                 }
-            })
-            productFinded.save()
-            orderFinded.save()
-            res.json({ success: true, data: orderFinded }).status(200).end()
+                const newReview = { date: Date.now(), review: opinion, rating: rate, user_id: user.id }
+                productFinded.reviews.push(newReview)
+                const ratingAverage = productFinded.reviews.reduce((total, next) => total + next.rating, 0) / productFinded.reviews.length;
+                productFinded.rating_average = ratingAverage
+                orderFinded.items.map(item => {
+                    if (item.product._id.toString() === product_id) {
+                        if (!item.product.reviews) {
+                            item.product.reviews = []
+                        }
+                        item.product.reviews.push(newReview)
+                        item.product.rating_average = ratingAverage
+                    }
+                })
+                productFinded.save()
+                orderFinded.save()
+                res.json({ success: true, data: orderFinded }).status(200).end()
+            }
         }
         catch (error) {
             next(error)
