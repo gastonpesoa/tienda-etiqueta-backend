@@ -27,7 +27,8 @@ loginRouter.post('/', async (req, res, next) => {
                 address: userFinded.address,
                 city: userFinded.city,
                 province: userFinded.province,
-                postal_code: userFinded.postal_code
+                postal_code: userFinded.postal_code,
+                type: userFinded.type
             }
             const token = await jwt.sign(userToken, PRIVATE_KEY, { expiresIn: "7d" })
             res.status(200).json({ success: true, data: { user, token, } }).end()

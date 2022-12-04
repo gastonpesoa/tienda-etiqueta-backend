@@ -6,13 +6,13 @@ const { PRIVATE_KEY } = require('../utils/config')
 
 usersRouter.post('/', async (req, res, next) => {
     try {
-        const { name, last_name, email, password, address, city, province, postal_code } = req.body
+        const { name, last_name, email, password, address, city, province, type, postal_code } = req.body
         const saltRounds = 10
         if (password.length < 8) {
             next({ name: "ValidationError", message: "La contraseña debe tener 8 caracteres como mínimo" })
         } else {
             const password_hash = await bcrypt.hash(password, saltRounds)
-            const newUser = new User({ name, last_name, email, address, city, province, postal_code, password_hash })
+            const newUser = new User({ name, last_name, email, address, city, province, postal_code, type, password_hash })
             const userSaved = await newUser.save(newUser)
             const user = {
                 name: userSaved.name,
@@ -37,15 +37,15 @@ usersRouter.post('/', async (req, res, next) => {
 })
 
 usersRouter.put('/', async (req, res, next) => {
-        
+
     const bearerToken = req.headers['authorization']
     if (typeof bearerToken === 'undefined') {
         next({ name: "ErrorToken", message: "No token" })
-    } 
-    
+    }
+
     try {
         req.token = bearerToken.split(' ')[1]
-        const userData = jwt.verify(req.token, PRIVATE_KEY)      
+        const userData = jwt.verify(req.token, PRIVATE_KEY)
         const {
             name,
             last_name,

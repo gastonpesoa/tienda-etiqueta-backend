@@ -10,6 +10,7 @@ const UserSchema = new Schema({
     province: { type: String, required: true },
     postal_code: { type: Number, required: true },
     telephone: { type: Number },
+    type: { type: String },
     password_hash: { type: String, required: true }
 })
 
