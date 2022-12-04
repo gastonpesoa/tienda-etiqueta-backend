@@ -34,7 +34,8 @@ const ProductSchema = new Schema({
         new Schema({
             rating: Number,
             review: String,
-            user_id: String
+            user_id: String,
+            date: Date,
         })
     ]
 })

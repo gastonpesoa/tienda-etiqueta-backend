@@ -20,6 +20,7 @@ loginRouter.post('/', async (req, res, next) => {
                 id: userFinded._id
             }
             const user = {
+                id: userFinded._id,
                 name: userFinded.name,
                 last_name: userFinded.last_name,
                 email: userFinded.email,

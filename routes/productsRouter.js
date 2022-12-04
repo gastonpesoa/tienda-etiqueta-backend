@@ -1,23 +1,26 @@
 const mongoose = require('mongoose')
+const jwt = require('jsonwebtoken')
+const { PRIVATE_KEY } = require('../utils/config')
 const productsRouter = require('express').Router()
 const Product = require("../models/Product")
+const User = require("../models/User")
+const Order = require("../models/Order")
 
 productsRouter.get('/', async (req, res, next) => {
     try {
-        let availableProducts = await Product.aggregate([
-            {
-                $project: {
-                    articles: {
-                        $filter: {
-                            input: "$articles",
-                            as: "article",
-                            cond: { $gt: ["$$article.stock", 0] }
-                        }
-                    },
-                    images: 1, title: 1, category: 1, subcategory: 1, description: 1, detail: 1,
-                    price: 1, brand: 1, color: 1, gender: 1, rating_average: 1, cut: 1, reviews: 1
-                }
+        let availableProducts = await Product.aggregate([{
+            $project: {
+                articles: {
+                    $filter: {
+                        input: "$articles",
+                        as: "article",
+                        cond: { $gt: ["$$article.stock", 0] }
+                    }
+                },
+                images: 1, title: 1, category: 1, subcategory: 1, description: 1, detail: 1,
+                price: 1, brand: 1, color: 1, gender: 1, rating_average: 1, cut: 1, reviews: 1
             }
+        }
         ])
         if (availableProducts) {
             res.json({ success: true, data: availableProducts }).status(200).end()
@@ -120,19 +123,45 @@ productsRouter.get('/category/:category/subcategory/:subcategory', async (req, r
 })
 
 productsRouter.put('/review', async (req, res, next) => {
-    const { opinion, rate, product_id } = req.body;
-    try {
-        let productFinded = await Product.findById(mongoose.Types.ObjectId(product_id))
-        if (productFinded) {
-            console.log("productFinded", productFinded)
-            let reviews = productFinded.reviews
-            reviews.push({ date: Date.now(), review: opinion, rating: rate })
-            console.log("reviews updated", reviews)
-            let updateResult = await Product.findByIdAndUpdate(productFinded.id, { "reviews": reviews })
-            res.json({ success: true, data: updateResult }).status(200).end()
+    const bearerToken = req.headers['authorization']
+    const { opinion, rate, product_id, order_id } = req.body;
+    if (typeof bearerToken !== 'undefined') {
+        try {
+            req.token = bearerToken.split(' ')[1]
+            const user = await jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(mongoose.Types.ObjectId(user.id))
+            console.log("order_id", order_id)
+            let productFinded = await Product.findById(mongoose.Types.ObjectId(product_id))
+            let orderFinded = await Order.findById(mongoose.Types.ObjectId(order_id))
+            if (!productFinded || !orderFinded) {
+                next({ name: "ReferenceError", message: "No product" })
+            }
+            if (!productFinded.reviews) {
+                productFinded.reviews = []
+            }
+            const newReview = { date: Date.now(), review: opinion, rating: rate, user_id: user.id }
+            productFinded.reviews.push(newReview)
+            const ratingAverage = productFinded.reviews.reduce((total, next) => total + next.rating, 0) / productFinded.reviews.length;
+            productFinded.rating_average = ratingAverage
+            orderFinded.items.map(item => {
+                if (item.product._id.toString() === product_id) {
+                    if (!item.product.reviews) {
+                        item.product.reviews = []
+                    }
+                    item.product.reviews.push(newReview)
+                    item.product.rating_average = ratingAverage
+                }
+            })
+            productFinded.save()
+            orderFinded.save()
+            res.json({ success: true, data: orderFinded }).status(200).end()
         }
-    } catch (error) {
-        next(error)
+        catch (error) {
+            next(error)
+        }
+    }
+    else {
+        next({ name: "ErrorToken", message: "No token" })
     }
 });
 

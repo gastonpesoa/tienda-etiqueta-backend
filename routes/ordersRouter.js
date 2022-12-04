@@ -183,8 +183,6 @@ ordersRouter.post('/', async (req, res, next) => {
             })
         }
 
-        // console.log("order", order)
-
         const orderSaved = await order.save(order)
         res.status(201).json({ success: true, data: orderSaved }).end()
 
