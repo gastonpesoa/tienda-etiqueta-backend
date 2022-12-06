@@ -29,8 +29,8 @@ categoriesRouter.get('/id/:id', (req, res, next) => {
 
 // Agrega una categoría
 categoriesRouter.post('/', (req, res, next) => {
-    const { name } = req.body;
-    const newCategory = new Category({ name });
+    const { name, url } = req.body;
+    const newCategory = new Category({ name, url });
         
     newCategory.save()
     .then((obj) => {
@@ -44,8 +44,8 @@ categoriesRouter.post('/', (req, res, next) => {
 // Actualiza una categoría
 categoriesRouter.put('/id/:id', (req, res, next) => {
     const { id } = req.params;
-    const { name } = req.body;
-    const categoryToEdit = { name };
+    const { name, url } = req.body;
+    const categoryToEdit = { name, url };
   
     Category.findByIdAndUpdate(id, categoryToEdit, { new: true })
     .then((obj) => {
