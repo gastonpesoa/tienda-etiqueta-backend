@@ -32,7 +32,7 @@ productsRouter.get('/', async (req, res, next) => {
     }
 })
 
-productsRouter.get('/:id', async (req, res, next) => {
+productsRouter.get('/id/:id', async (req, res, next) => {
     const id = req.params.id
     try {
         let product = await Product.aggregate([
@@ -141,6 +141,74 @@ productsRouter.get('/search/:query', async (req, res, next) => {
                     price: 1, brand: 1, color: 1, gender: 1, rating_average: 1, cut: 1, reviews: 1
                 }
             }
+        ])
+        console.log(queryResult)
+        if (queryResult) {
+            res.json({ success: true, data: queryResult }).status(200).end()
+        } else {
+            res.json({ success: false, data: 'Not available Products found' }).status(404).end()
+        }
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
+productsRouter.get('/best-sellers', async (req, res, next) => {
+    try {
+        let queryResult = await Order.aggregate([
+            [
+                {
+                    $unwind: "$items",
+                },
+                {
+                    $unwind: "$items.product.articles",
+                },
+                {
+                    $group: {
+                        _id: "$items.product._id",
+                        item: { $first: "$items.product" },
+                        ventas: { $sum: 1 },
+                    },
+                },
+                {
+                    $sort: {
+                        ventas: -1,
+                    },
+                },
+                { $limit: 3 }
+            ]
+        ])
+        console.log(queryResult)
+        if (queryResult) {
+            res.json({ success: true, data: queryResult }).status(200).end()
+        } else {
+            res.json({ success: false, data: 'Not available Products found' }).status(404).end()
+        }
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
+productsRouter.get('/best/:category', async (req, res, next) => {
+    const category = req.params.category
+    try {
+        let queryResult = await Product.aggregate([
+            [
+                {
+                    $match: {
+                        "category.url": category,
+                        rating_average: { $gt: 0 },
+                    }
+                },
+                {
+                    $sort: {
+                        rating_average: -1,
+                    },
+                },
+                { $limit: 3 }
+            ]
         ])
         console.log(queryResult)
         if (queryResult) {

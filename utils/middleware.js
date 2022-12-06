@@ -7,6 +7,7 @@ const handlerNotFound = (req, res) => {
 
 const handlerError = (error, req, res, next) => {
     console.log(`error`, error.name)
+    console.log(`error`, error)
     if (error.name === "CastError") {
         res.status(400).send({ error: error.name, message: error.message })
     } else if (error.name === "SyntaxError") {

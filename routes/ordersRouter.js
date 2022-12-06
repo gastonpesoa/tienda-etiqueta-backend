@@ -57,7 +57,7 @@ ordersRouter.get('/all', async (req, res, next) => {
     }
 })
 
-ordersRouter.get('/:id', (req, res, next) => {
+ordersRouter.get('/id/:id', (req, res, next) => {
     const id = req.params.id
     Order.findById(id)
         .then(order => {
