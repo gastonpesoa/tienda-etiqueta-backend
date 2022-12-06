@@ -4,6 +4,41 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { PRIVATE_KEY } = require('../utils/config')
 
+usersRouter.get('/', async (req, res, next) => {
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin") {
+                const users = await User.aggregate([
+                    {
+                        $match: {
+                            $or: [{ type: "admin" }, { type: "employee" }]
+                        }
+                    },
+                    {
+                        $project: {
+                            name: 1,
+                            last_name: 1,
+                            email: 1,
+                            type: 1,
+                        }
+                    }
+                ])
+                res.status(201).json({ success: true, data: users }).end()
+            }
+        }
+
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
 usersRouter.post('/', async (req, res, next) => {
     try {
         const { name, last_name, email, password, address, city, province, type, postal_code } = req.body
@@ -37,12 +72,10 @@ usersRouter.post('/', async (req, res, next) => {
 })
 
 usersRouter.put('/', async (req, res, next) => {
-
     const bearerToken = req.headers['authorization']
     if (typeof bearerToken === 'undefined') {
         next({ name: "ErrorToken", message: "No token" })
     }
-
     try {
         req.token = bearerToken.split(' ')[1]
         const userData = jwt.verify(req.token, PRIVATE_KEY)
@@ -90,6 +123,32 @@ usersRouter.put('/', async (req, res, next) => {
     } catch (error) {
         console.log(`err`, err)
         next(err)
+    }
+})
+
+usersRouter.delete('/:id', async (req, res, next) => {
+    const id = req.params.id
+    const bearerToken = req.headers['authorization']
+    if (typeof bearerToken === 'undefined') {
+        next({ name: "ErrorToken", message: "No token" })
+    } else {
+        req.token = bearerToken.split(' ')[1]
+        const userData = jwt.verify(req.token, PRIVATE_KEY)
+        const userFinded = await User.findById(userData.id)
+        if (userFinded.type === "admin") {
+            console.log("ADMIN ID TO REMOVE", id)
+            User.findByIdAndRemove(id)
+                .then(user => {
+                    if (user) {
+                        res.json({ success: true, data: user }).status(204).end()
+                    } else {
+                        res.json({ success: false, data: 'User not found' }).status(404).end()
+                    }
+                })
+                .catch(err => {
+                    next(err)
+                })
+        }
     }
 })
 
