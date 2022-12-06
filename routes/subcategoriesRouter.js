@@ -28,7 +28,7 @@ subcategoriesRouter.get('/id/:id', (req, res, next) => {
         });
 });
 
-// Traer subcategorías por categoría
+// Traer subcategorías por ID de categoría
 subcategoriesRouter.get('/category/:id', (req, res, next) => {
     const id = req.params.id;
     Subcategory.find({ "category._id": id })
@@ -36,7 +36,7 @@ subcategoriesRouter.get('/category/:id', (req, res, next) => {
             if (obj) {
                 res.json({ success: true, data: obj }).status(200).end();
             } else {
-                res.json({ success: false, data: 'Subcategorys not found' }).status(404).end();
+                res.json({ success: false, data: 'Subcategories not found' }).status(404).end();
             }
         })
         .catch(err => {
@@ -46,11 +46,11 @@ subcategoriesRouter.get('/category/:id', (req, res, next) => {
 
 // Agrega una subcategoría
 subcategoriesRouter.post('/', (req, res, next) => {
-    const { name, idCategory } = req.body;
+    const { name, url, idCategory } = req.body;
 
     const getCategory = async () => {
         let category = await Category.findById(idCategory);
-        const newSubcategory = new Subcategory({ name, category });
+        const newSubcategory = new Subcategory({ name, url, category });
 
         newSubcategory.save()
             .then((obj) => {
