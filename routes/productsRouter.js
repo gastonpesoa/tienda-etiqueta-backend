@@ -122,6 +122,39 @@ productsRouter.get('/category/:category/subcategory/:subcategory', async (req, r
     }
 })
 
+productsRouter.get('/search/:query', async (req, res, next) => {
+    const query = req.params.query
+    try {
+        let queryResult = await Product.aggregate([
+            { $match: { $text: { $search: query } } },
+            //{ $sort: { score: { $meta: "textScore" } } },
+            {
+                $project: {
+                    articles: {
+                        $filter: {
+                            input: "$articles",
+                            as: "article",
+                            cond: { $gt: ["$$article.stock", 0] }
+                        }
+                    },
+                    images: 1, title: 1, category: 1, subcategory: 1, description: 1, detail: 1,
+                    price: 1, brand: 1, color: 1, gender: 1, rating_average: 1, cut: 1, reviews: 1
+                }
+            }
+        ])
+        console.log(queryResult)
+        if (queryResult) {
+            res.json({ success: true, data: queryResult }).status(200).end()
+        } else {
+            res.json({ success: false, data: 'Not available Products found' }).status(404).end()
+        }
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
+
 productsRouter.put('/review', async (req, res, next) => {
     const bearerToken = req.headers['authorization']
     const { opinion, rate, product_id, order_id } = req.body;
