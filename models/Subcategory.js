@@ -10,7 +10,7 @@ const SubcategorySchema = new Schema({
     },
     url: {
         type: String,
-        required: true
+        //required: true
     }
 })
 

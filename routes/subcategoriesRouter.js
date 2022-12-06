@@ -1,4 +1,5 @@
 const subcategoriesRouter = require('express').Router();
+const Category = require('../models/Category');
 const Subcategory = require("../models/Subcategory");
 
 subcategoriesRouter.get('/', (req, res, next) => {
@@ -27,19 +28,41 @@ subcategoriesRouter.get('/id/:id', (req, res, next) => {
         });
 });
 
+// Traer subcategorías por categoría
+subcategoriesRouter.get('/category/:id', (req, res, next) => {
+    const id = req.params.id;
+    Subcategory.find({ "category._id": id })
+        .then(obj => {
+            if (obj) {
+                res.json({ success: true, data: obj }).status(200).end();
+            } else {
+                res.json({ success: false, data: 'Subcategorys not found' }).status(404).end();
+            }
+        })
+        .catch(err => {
+            next(err);
+        });
+});
+
 // Agrega una subcategoría
-/*subcategoriesRouter.post('/', (req, res, next) => {
-    const { name } = req.body;
-    const newCategory = new Category({ name });
-        
-    newCategory.save()
-    .then((obj) => {
-        obj ? res.status(201).send(obj) : res.status(400).send();
-    })
-    .catch((err) => {
-        next(err);
-    });
-});*/
+subcategoriesRouter.post('/', (req, res, next) => {
+    const { name, idCategory } = req.body;
+
+    const getCategory = async () => {
+        let category = await Category.findById(idCategory);
+        const newSubcategory = new Subcategory({ name, category });
+
+        newSubcategory.save()
+            .then((obj) => {
+                obj ? res.status(201).send(obj) : res.status(400).send();
+            })
+            .catch((err) => {
+                next(err);
+            });
+    }
+
+    getCategory();
+});
 
 // Actualiza una subcategoría
 /*subcategoriesRouter.put('/id/:id', (req, res, next) => {
