@@ -1,5 +1,8 @@
+const jwt = require('jsonwebtoken')
+const { PRIVATE_KEY } = require('../utils/config')
 const discountCodesRouter = require('express').Router();
 const DiscountCode = require("../models/DiscountCode");
+const User = require("../models/User");
 
 discountCodesRouter.get('/', (req, res, next) => {
     DiscountCode.find({})
@@ -42,56 +45,105 @@ discountCodesRouter.get('/code/:code', (req, res, next) => {
 // Marca un código como usado
 discountCodesRouter.put('/code/:code', (req, res, next) => {
     const { code } = req.params;
-  
+
     DiscountCode.findOneAndUpdate({ "code": code }, { "used": true })
-    .then((discountCode) => {
-        discountCode ? res.status(200).json(discountCode) : res.status(404).end();
-    })
-    .catch(err => {
-        next(err);
-    });
+        .then((discountCode) => {
+            discountCode ? res.status(200).json(discountCode) : res.status(404).end();
+        })
+        .catch(err => {
+            next(err);
+        });
 });
 
 // Agrega un código
-discountCodesRouter.post('/', (req, res, next) => {
+discountCodesRouter.post('/', async (req, res, next) => {
     const { code, amount, used, due_date, created_by } = req.body;
-    const newDiscountCode = new DiscountCode({ code, amount, used, due_date, created_by });
-        
-    newDiscountCode.save()
-    .then((discountCode) => {
-        discountCode ? res.status(201).send(discountCode) : res.status(400).send();
-    })
-    .catch((err) => {
-        next(err);
-    });
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin") {
+                const newDiscountCode = new DiscountCode({ code, amount, used, due_date, created_by });
+                newDiscountCode.used = false
+                newDiscountCode.created_by = `${userFinded.name} ${userFinded.last_name}`
+                newDiscountCode.save()
+                    .then((discountCode) => {
+                        discountCode ? res.status(201).send(discountCode) : res.status(400).send();
+                    })
+                    .catch((err) => {
+                        next(err);
+                    });
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        next(error);
+    }
+
 });
 
 // Actualiza un código
-discountCodesRouter.put('/id/:id', (req, res, next) => {
+discountCodesRouter.put('/id/:id', async (req, res, next) => {
     const { id } = req.params;
     const { code, amount, used, due_date, created_by } = req.body;
-    const discountCodeToEdit = { code, amount, used, due_date, created_by };
-  
-    DiscountCode.findByIdAndUpdate(id, discountCodeToEdit, { new: true })
-    .then((discountCode) => {
-        discountCode ? res.status(200).json(discountCode) : res.status(404).end();
-    })
-    .catch(err => {
-        next(err);
-    });
+
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin") {
+                const discountCodeToEdit = { code, amount, used, due_date, created_by };
+                DiscountCode.findByIdAndUpdate(id, discountCodeToEdit, { new: true })
+                    .then((discountCode) => {
+                        discountCode ? res.status(200).json(discountCode) : res.status(404).end();
+                    })
+                    .catch(err => {
+                        next(err);
+                    });
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        next(error);
+    }
 });
 
 // Elimina un código
-discountCodesRouter.delete("/id/:id", (req, res, next) => {
+discountCodesRouter.delete("/id/:id", async (req, res, next) => {
     const { id } = req.params;
-  
-    DiscountCode.findByIdAndRemove(id)
-    .then((obj) => {
-        obj ? res.status(200).json(obj) : res.status(404).end();
-    })
-    .catch((err) => {
-        next(err);
-    });
+
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin") {
+                DiscountCode.findByIdAndRemove(id)
+                    .then((obj) => {
+                        obj ? res.status(200).json(obj) : res.status(404).end();
+                    })
+                    .catch((err) => {
+                        next(err);
+                    });
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        next(error);
+    }
+
+
 });
 
 module.exports = discountCodesRouter;
