@@ -1,20 +1,16 @@
 const mongoose = require('mongoose')
+const Category = require('./Category')
+const Subcategory = require('./Subcategory')
 const { model, Schema } = mongoose
 
 const ProductSchema = new Schema({
     images: [String],
     title: { type: String, required: true },
     category: {
-        name: {
-            type: String,
-            required: true
-        },
-        url: {
-            type: String,
-            required: true
-        }
+        type: Category.schema, 
+        required: true
     },
-    subcategory: { name: { type: String }, url: { type: String } },
+    subcategory: { type: Subcategory.schema },
     description: { type: String, required: true },
     detail: { type: String, required: true },
     price: { type: Number, required: true },

@@ -352,7 +352,7 @@ productsRouter.put('/id/:id', async (req, res, next) => {
                         sku = formatText(category.name) + formatText(brand) + formatText(color) + formatText(article.size) + formatText(i.toString());
                         result = await Product.aggregate([{ $match: { "articles.sku": sku } }])
                         console.log(result);
-                    } while (result.length > 0 && result._id.toString() != id)
+                    } while (result.length > 0 && result._id != undefined && result._id.toString() != id)
                     article.sku = sku;
                 };
                 const productToEdit = { title, category, subcategory, description, detail, price, brand, color, gender, cut, articles };
