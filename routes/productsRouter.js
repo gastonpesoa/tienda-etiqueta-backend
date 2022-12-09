@@ -318,4 +318,31 @@ productsRouter.put('/review', async (req, res, next) => {
     }
 });
 
+productsRouter.delete("/id/:id", async (req, res, next) => {
+    const { id } = req.params;
+
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin" || userFinded.type === "employee") {
+                Product.findByIdAndRemove(id)
+                    .then((obj) => {
+                        obj ? res.status(200).json(obj) : res.status(404).end();
+                    })
+                    .catch((err) => {
+                        next(err);
+                    });
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        next(error);
+    }
+});
+
 module.exports = productsRouter
