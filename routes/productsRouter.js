@@ -61,23 +61,33 @@ productsRouter.get('/all', async (req, res, next) => {
 
 productsRouter.post('/', async (req, res, next) => {
     try {
-        const { title, categoryId, subcategoryId, brand, color, price, gender, description, detail, cut, articles } = req.body
-        const category = await Category.findById(categoryId);
-        const subcategory = await Subcategory.findById(subcategoryId);
-        const formatText = text => text.slice(0, 3).padStart(3, '0').toUpperCase();
-        for (const article of articles) {
-            let i = 0;
-            let sku, result;
-            do {
-                i++;
-                sku = formatText(category.name) + formatText(brand) + formatText(color) + formatText(article.size) + formatText(i.toString());
-                result = await Product.aggregate([{ $match: { "articles.sku": sku } }])
-            } while (result.length > 0)
-            article.sku = sku;
-        };
-        const newProduct = await new Product({ title, category, subcategory, description, detail, price, brand, color, gender, cut, articles });
-        const productSaved = await newProduct.save();
-        res.status(201).json({ success: true, data: { productSaved } }).end()
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin" || userFinded.type === "employee") {
+                const { title, categoryId, subcategoryId, brand, color, price, gender, description, detail, cut, articles } = req.body
+                const category = await Category.findById(categoryId);
+                const subcategory = await Subcategory.findById(subcategoryId);
+                const formatText = text => text.slice(0, 3).padStart(3, '0').toUpperCase();
+                for (const article of articles) {
+                    let i = 0;
+                    let sku, result;
+                    do {
+                        i++;
+                        sku = formatText(category.name) + formatText(brand) + formatText(color) + formatText(article.size) + formatText(i.toString());
+                        result = await Product.aggregate([{ $match: { "articles.sku": sku } }])
+                    } while (result.length > 0)
+                    article.sku = sku;
+                };
+                const newProduct = await new Product({ title, category, subcategory, description, detail, price, brand, color, gender, cut, articles });
+                const productSaved = await newProduct.save();
+                res.status(201).json({ success: true, data: { productSaved } }).end()
+            }
+        }
     } catch (error) {
         console.log(error)
         next(error)
@@ -315,6 +325,49 @@ productsRouter.put('/review', async (req, res, next) => {
     }
     else {
         next({ name: "ErrorToken", message: "No token" })
+    }
+});
+
+productsRouter.put('/id/:id', async (req, res, next) => {
+    const { id } = req.params;
+    const { title, categoryId, subcategoryId, brand, color, price, gender, description, detail, cut, articles } = req.body;
+    console.log(new mongoose.Types.ObjectId(id).toString());
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin" || userFinded.type === "employee") {
+                const category = await Category.findById(categoryId);
+                const subcategory = await Subcategory.findById(subcategoryId);
+                const formatText = text => text.slice(0, 3).padStart(3, '0').toUpperCase();
+                for (const article of articles) {
+                    let i = 0;
+                    let sku, result;
+                    do {
+                        i++;
+                        sku = formatText(category.name) + formatText(brand) + formatText(color) + formatText(article.size) + formatText(i.toString());
+                        result = await Product.aggregate([{ $match: { "articles.sku": sku } }])
+                        console.log(result);
+                    } while (result.length > 0 && result._id.toString() != id)
+                    article.sku = sku;
+                };
+                const productToEdit = { title, category, subcategory, description, detail, price, brand, color, gender, cut, articles };
+                Product.findByIdAndUpdate(id, productToEdit, { new: true })
+                    .then((product) => {
+                        product ? res.status(200).json(product) : res.status(404).end();
+                    })
+                    .catch(err => {
+                        next(err);
+                    });
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        next(error);
     }
 });
 
