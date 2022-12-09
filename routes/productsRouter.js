@@ -34,6 +34,31 @@ productsRouter.get('/', async (req, res, next) => {
     }
 })
 
+productsRouter.get('/all', async (req, res, next) => {
+    try {
+        let availableProducts = await Product.aggregate([{
+            $project: {
+                articles: {
+                    $filter: {
+                        input: "$articles",
+                        as: "article"
+                    }
+                },
+                images: 1, title: 1, category: 1, subcategory: 1, description: 1, detail: 1,
+                price: 1, brand: 1, color: 1, gender: 1, rating_average: 1, cut: 1, reviews: 1
+            }
+        }
+        ])
+        if (availableProducts) {
+            res.json({ success: true, data: availableProducts }).status(200).end()
+        } else {
+            res.json({ success: false, data: 'Not available Products found' }).status(404).end()
+        }
+    } catch (error) {
+        next(error)
+    }
+})
+
 productsRouter.post('/', async (req, res, next) => {
     try {
         const { title, categoryId, subcategoryId, brand, color, price, gender, description, detail, cut, articles } = req.body
