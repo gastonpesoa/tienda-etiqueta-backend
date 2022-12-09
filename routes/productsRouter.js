@@ -32,6 +32,32 @@ productsRouter.get('/', async (req, res, next) => {
     }
 })
 
+productsRouter.post('/', async (req, res, next) => {
+    try {
+        console.log(req.body);
+        res.status(201).json({ success: true, data: req.body  }).end()
+        const { title, categoryId, subcategoryId, brand, color, price, gender, description, detail, article } = req.body
+        console.log(article);
+
+        /*const newUser = new User({ name, last_name, email, address, city, province, postal_code, type, password_hash })
+        const userSaved = await newUser.save(newUser)
+        const user = {
+            name: userSaved.name,
+            last_name: userSaved.last_name,
+            email: userSaved.email,
+            address: userSaved.address,
+            city: userSaved.city,
+            province: userSaved.province,
+            postal_code: userSaved.postal_code
+        }
+
+        res.status(201).json({ success: true, data: { user } }).end()*/
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
 productsRouter.get('/id/:id', async (req, res, next) => {
     const id = req.params.id
     try {
