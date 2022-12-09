@@ -5,6 +5,8 @@ const productsRouter = require('express').Router()
 const Product = require("../models/Product")
 const User = require("../models/User")
 const Order = require("../models/Order")
+const Category = require("../models/Category")
+const Subcategory = require("../models/Subcategory")
 
 productsRouter.get('/', async (req, res, next) => {
     try {
@@ -34,24 +36,23 @@ productsRouter.get('/', async (req, res, next) => {
 
 productsRouter.post('/', async (req, res, next) => {
     try {
-        console.log(req.body);
-        res.status(201).json({ success: true, data: req.body  }).end()
-        const { title, categoryId, subcategoryId, brand, color, price, gender, description, detail, article } = req.body
-        console.log(article);
-
-        /*const newUser = new User({ name, last_name, email, address, city, province, postal_code, type, password_hash })
-        const userSaved = await newUser.save(newUser)
-        const user = {
-            name: userSaved.name,
-            last_name: userSaved.last_name,
-            email: userSaved.email,
-            address: userSaved.address,
-            city: userSaved.city,
-            province: userSaved.province,
-            postal_code: userSaved.postal_code
-        }
-
-        res.status(201).json({ success: true, data: { user } }).end()*/
+        const { title, categoryId, subcategoryId, brand, color, price, gender, description, detail, cut, articles } = req.body
+        const category = await Category.findById(categoryId);
+        const subcategory = await Subcategory.findById(subcategoryId);
+        const formatText = text => text.slice(0, 3).padStart(3, '0').toUpperCase();
+        for (const article of articles) {
+            let i = 0;
+            let sku, result;
+            do {
+                i++;
+                sku = formatText(category.name) + formatText(brand) + formatText(color) + formatText(article.size) + formatText(i.toString());
+                result = await Product.aggregate([{ $match: { "articles.sku": sku } }])
+            } while (result.length > 0)
+            article.sku = sku;
+        };
+        const newProduct = await new Product({ title, category, subcategory, description, detail, price, brand, color, gender, cut, articles });
+        const productSaved = await newProduct.save();
+        res.status(201).json({ success: true, data: { productSaved } }).end()
     } catch (error) {
         console.log(error)
         next(error)
