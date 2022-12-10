@@ -108,7 +108,7 @@ subcategoriesRouter.put('/id/:id', async (req, res, next) => {
 });
 
 // Elimina una subcategoría
-subcategoriesRouter.delete("/id/:id", (req, res, next) => {
+subcategoriesRouter.delete("/id/:id", async (req, res, next) => {
     try {
         const bearerToken = req.headers['authorization']
         if (typeof bearerToken === 'undefined') {
