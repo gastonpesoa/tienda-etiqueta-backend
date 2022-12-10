@@ -45,57 +45,94 @@ subcategoriesRouter.get('/category/:id', (req, res, next) => {
 });
 
 // Agrega una subcategoría
-subcategoriesRouter.post('/', (req, res, next) => {
-    const { name, url, idCategory } = req.body;
+subcategoriesRouter.post('/', async (req, res, next) => {
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin") {
+                const { name, url, idCategory } = req.body;
 
-    const getCategory = async () => {
-        let category = await Category.findById(idCategory);
-        const newSubcategory = new Subcategory({ name, url, category });
+                let category = await Category.findById(idCategory);
+                const newSubcategory = new Subcategory({ name, url, category });
 
-        newSubcategory.save()
-            .then((obj) => {
-                obj ? res.status(201).send(obj) : res.status(400).send();
-            })
-            .catch((err) => {
-                next(err);
-            });
+                newSubcategory.save()
+                .then((obj) => {
+                    obj ? res.status(201).send(obj) : res.status(400).send();
+                })
+                .catch((err) => {
+                    next(err);
+                });
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        next(error)
     }
-
-    getCategory();
 });
 
 // Actualiza una subcategoría
-subcategoriesRouter.put('/id/:id', (req, res, next) => {
-    const { id } = req.params;
-    const { name, url, idCategory } = req.body;
+subcategoriesRouter.put('/id/:id', async (req, res, next) => {
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin") {
+                const { id } = req.params;
+                const { name, url, idCategory } = req.body;
 
-    const getCategory = async () => {
-        let category = await Category.findById(idCategory);
-        const categoryToEdit = { name, url, category };
-    
-        Subcategory.findByIdAndUpdate(id, categoryToEdit, { new: true })
-        .then((obj) => {
-            obj ? res.status(200).json(obj) : res.status(404).end();
-        })
-        .catch(err => {
-            next(err);
-        });
+                let category = await Category.findById(idCategory);
+                const categoryToEdit = { name, url, category };
+
+                Subcategory.findByIdAndUpdate(id, categoryToEdit, { new: true })
+                .then((obj) => {
+                    obj ? res.status(200).json(obj) : res.status(404).end();
+                })
+                .catch(err => {
+                    next(err);
+                });
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        next(error)
     }
-
-    getCategory();
 });
 
 // Elimina una subcategoría
 subcategoriesRouter.delete("/id/:id", (req, res, next) => {
-    const { id } = req.params;
-  
-    Subcategory.findByIdAndRemove(id)
-    .then((obj) => {
-        obj ? res.status(200).json(obj) : res.status(404).end();
-    })
-    .catch((err) => {
-        next(err);
-    });
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin") {
+                const { id } = req.params;
+            
+                Subcategory.findByIdAndRemove(id)
+                .then((obj) => {
+                    obj ? res.status(200).json(obj) : res.status(404).end();
+                })
+                .catch((err) => {
+                    next(err);
+                });
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
 });
 
 module.exports = subcategoriesRouter;

@@ -78,7 +78,7 @@ provincesRouter.delete('/:id', async (req, res, next) => {
         req.token = bearerToken.split(' ')[1]
         const userData = jwt.verify(req.token, PRIVATE_KEY)
         const userFinded = await User.findById(userData.id)
-        if (userFinded.type === "admin") {
+        if (userFinded.type === "admin" || userFinded.type === "employee") {
             Province.findByIdAndRemove(id)
                 .then(province => {
                     if (province) {
