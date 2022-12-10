@@ -65,19 +65,25 @@ subcategoriesRouter.post('/', (req, res, next) => {
 });
 
 // Actualiza una subcategoría
-/*subcategoriesRouter.put('/id/:id', (req, res, next) => {
+subcategoriesRouter.put('/id/:id', (req, res, next) => {
     const { id } = req.params;
-    const { name } = req.body;
-    const categoryToEdit = { name };
-  
-    Category.findByIdAndUpdate(id, categoryToEdit, { new: true })
-    .then((obj) => {
-        obj ? res.status(200).json(obj) : res.status(404).end();
-    })
-    .catch(err => {
-        next(err);
-    });
-});*/
+    const { name, url, idCategory } = req.body;
+
+    const getCategory = async () => {
+        let category = await Category.findById(idCategory);
+        const categoryToEdit = { name, url, category };
+    
+        Subcategory.findByIdAndUpdate(id, categoryToEdit, { new: true })
+        .then((obj) => {
+            obj ? res.status(200).json(obj) : res.status(404).end();
+        })
+        .catch(err => {
+            next(err);
+        });
+    }
+
+    getCategory();
+});
 
 // Elimina una subcategoría
 subcategoriesRouter.delete("/id/:id", (req, res, next) => {
