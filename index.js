@@ -12,11 +12,12 @@ const banksRouter = require('./routes/banksRouter')
 const provincesRouter = require('./routes/provincesRouter')
 const categoriesRouter = require('./routes/categoriesRouter')
 const subcategoriesRouter = require('./routes/subcategoriesRouter')
+const carouselRouter = require('./routes/carouselRouter')
 
 const app = express()
 app.use(cors())
-app.use(express.json())
 app.use(logger)
+app.use(express.json({limit: '50mb'}));
 
 app.get('/', (req, res) => {
     res.send("<h1>Server running...</h1>")
@@ -31,6 +32,7 @@ app.use('/api/banks', banksRouter)
 app.use('/api/categories', categoriesRouter)
 app.use('/api/subcategories', subcategoriesRouter)
 app.use('/api/provinces', provincesRouter)
+app.use('/api/carousel', carouselRouter)
 
 app.use(handlerNotFound)
 app.use(handlerError)
