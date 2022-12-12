@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const { Readable } = require('stream');
 const jwt = require('jsonwebtoken')
 const { PRIVATE_KEY } = require('../utils/config')
 const productsRouter = require('express').Router()
@@ -69,7 +70,7 @@ productsRouter.post('/', async (req, res, next) => {
             const userData = jwt.verify(req.token, PRIVATE_KEY)
             const userFinded = await User.findById(userData.id)
             if (userFinded.type === "admin" || userFinded.type === "employee") {
-                const { title, categoryId, subcategoryId, brand, color, price, gender, description, detail, cut, articles } = req.body
+                const { title, categoryId, subcategoryId, brand, color, price, gender, description, detail, cut, articles, files } = req.body
                 const category = await Category.findById(categoryId);
                 const subcategory = await Subcategory.findById(subcategoryId);
                 const formatText = text => text.slice(0, 3).padStart(3, '0').toUpperCase();
@@ -85,6 +86,22 @@ productsRouter.post('/', async (req, res, next) => {
                 };
                 const newProduct = await new Product({ title, category, subcategory, description, detail, price, brand, color, gender, cut, articles });
                 const productSaved = await newProduct.save();
+
+                const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+                    bucketName: 'products'
+                })
+
+                files.map(file => {
+                    let buffer = Buffer.from(file.file.split(',')[1], 'base64')
+                    const fs = new Readable();
+                    fs.push(buffer);
+                    fs.push(null);
+                    let uploadStream = bucket.openUploadStream(file.fileName, {
+                        metadata: { field: 'productId', value: productSaved.id }
+                    });
+                    fs.pipe(uploadStream)
+                })
+
                 res.status(201).json({ success: true, data: { productSaved } }).end()
             }
         }
