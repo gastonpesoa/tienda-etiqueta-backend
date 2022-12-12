@@ -35,6 +35,10 @@ discountCodesRouter.get('/code/:code', (req, res, next) => {
     const code = req.params.code;
     DiscountCode.find({ "code": code, "used": false })
         .then(discountCode => {
+            const actualDate = new Date();
+            if (actualDate > discountCode[0].due_date) {
+                res.json({ success: true, data: [], message: 'El código de descuento ingresado se encuentra vencido' }).status(200).end();
+            }
             res.json({ success: true, data: discountCode }).status(200).end();
         })
         .catch(err => {
