@@ -4,6 +4,7 @@ const subcategoriesRouter = require('express').Router();
 const Category = require('../models/Category');
 const Subcategory = require("../models/Subcategory");
 const User = require("../models/User");
+const Product = require('../models/Product');
 
 subcategoriesRouter.get('/', (req, res, next) => {
     Subcategory.find({})
@@ -122,14 +123,20 @@ subcategoriesRouter.delete("/id/:id", async (req, res, next) => {
             const userFinded = await User.findById(userData.id)
             if (userFinded.type === "admin") {
                 const { id } = req.params;
-            
-                Subcategory.findByIdAndRemove(id)
-                .then((obj) => {
-                    obj ? res.status(200).json(obj) : res.status(404).end();
-                })
-                .catch((err) => {
-                    next(err);
-                });
+                const subcategory = await Subcategory.findById(id);
+                const resultProducts = await Product.aggregate([{ $match: { "subcategory._id": subcategory._id } }]);
+
+                if (resultProducts.length > 0) {
+                    res.status(409).json({ message: 'La sub-categoría no puede ser eliminada porque actualmente contiene artículos' })
+                } else {
+                    Subcategory.findByIdAndRemove(id)
+                    .then((obj) => {
+                        obj ? res.status(200).json(obj) : res.status(404).json({ message: 'Sub-categoría no encontrada' });
+                    })
+                    .catch((err) => {
+                        next(err);
+                    });
+                }
             }
         }
     } catch (error) {

@@ -3,6 +3,8 @@ const { PRIVATE_KEY } = require('../utils/config')
 const categoriesRouter = require('express').Router();
 const Category = require("../models/Category");
 const User = require("../models/User");
+const Subcategory = require('../models/Subcategory');
+const Product = require('../models/Product');
 
 categoriesRouter.get('/', (req, res, next) => {
     Category.find({})
@@ -102,15 +104,22 @@ categoriesRouter.delete("/id/:id", async (req, res, next) => {
             if (userFinded.type === "admin") {
                 const { id } = req.params;
                 const category = await Category.findById(id);
-                console.log(category);
-            
-                /*Category.findByIdAndRemove(id)
-                .then((obj) => {
-                    obj ? res.status(200).json(obj) : res.status(404).end();
-                })
-                .catch((err) => {
-                    next(err);
-                });*/
+                const resultSubcategories = await Subcategory.aggregate([{ $match: { "category._id": category._id } }]);
+                const resultProducts = await Product.aggregate([{ $match: { "category._id": category._id } }]);
+
+                if (resultSubcategories.length > 0) {
+                    res.status(409).json({ message: 'La categoría no puede ser eliminada porque actualmente contiene sub-categorías' })
+                } else if (resultProducts.length > 0) {
+                    res.status(409).json({ message: 'La categoría no puede ser eliminada porque actualmente contiene artículos' })
+                } else {
+                    Category.findByIdAndRemove(id)
+                    .then((obj) => {
+                        obj ? res.status(200).json(obj) : res.status(404).json({ message: 'Categoría no encontrada' });
+                    })
+                    .catch((err) => {
+                        next(err);
+                    });
+                }
             }
         }
     } catch (error) {
