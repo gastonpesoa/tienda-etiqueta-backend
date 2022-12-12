@@ -1,3 +1,5 @@
+const jwt = require('jsonwebtoken')
+const { PRIVATE_KEY } = require('../utils/config')
 const mongoose = require('mongoose')
 const ordersRouter = require('express').Router()
 const Order = require("../models/Order")
@@ -194,18 +196,46 @@ ordersRouter.post('/', async (req, res, next) => {
     }
 })
 
-ordersRouter.put('/state/:id', (req, res, next) => {
-    const { id } = req.params;
-    const { state } = req.body;
-    const orderToEdit = { state };
-  
-    Order.findByIdAndUpdate(id, orderToEdit, { new: true })
-    .then((obj) => {
-        obj ? res.status(200).json(obj) : res.status(404).end();
-    })
-    .catch(err => {
-        next(err);
-    });
+ordersRouter.put('/state/:id', async (req, res, next) => {
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin" || userFinded.type === "employee") {
+                const { id } = req.params;
+                const { state } = req.body;
+                const orderToEdit = { state };
+
+                if (state == 'CANCELADA') {
+                    const order = await Order.findById(id);
+                    order.items.forEach(async (item) => {
+                        let product = await Product.findById(item.product._id)
+                        for (article of product.articles) {
+                            if (article.size == item.product.articles[0].size) {
+                                article.stock += item.units;
+                                product.save();
+                            }
+                        }
+                    });
+                }
+            
+                Order.findByIdAndUpdate(id, orderToEdit, { new: true })
+                .then((obj) => {
+                    obj ? res.status(200).json(obj) : res.status(404).end();
+                })
+                .catch(err => {
+                    next(err);
+                });
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
 })
 
 module.exports = ordersRouter
