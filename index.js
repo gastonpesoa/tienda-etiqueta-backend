@@ -3,6 +3,7 @@ const { PORT } = require('./utils/config')
 const express = require('express')
 const cors = require('cors')
 const { handlerNotFound, handlerError, logger } = require('./utils/middleware')
+const orderCheckService = require('./services/orderCheckService')
 const loginRouter = require('./routes/loginRouter')
 const usersRouter = require('./routes/usersRouter')
 const productsRouter = require('./routes/productsRouter')
@@ -36,6 +37,8 @@ app.use('/api/carousel', carouselRouter)
 
 app.use(handlerNotFound)
 app.use(handlerError)
+
+orderCheckService();
 
 app.listen(PORT, () => {
     console.log(`Server listening on http://localhost:${PORT}`)

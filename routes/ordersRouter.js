@@ -221,6 +221,23 @@ ordersRouter.put('/state/:id', async (req, res, next) => {
                             }
                         }
                     });
+
+                    let user = await User.findById(order.user._id);
+                    if (user.warnings === undefined) {
+                        user.warnings = 1;
+                    } else {
+                        user.warnings += 1;
+                    }
+                    user.save();
+                } else if (state == 'ENTREGADA') {
+                    const order = await Order.findById(id);
+                    let user = await User.findById(order.user._id);
+                    if (user.warnings === undefined) {
+                        user.warnings = 0;
+                    } else if (user.warnings > 0) {
+                        user.warnings -= 1;
+                    }
+                    user.save();
                 }
             
                 Order.findByIdAndUpdate(id, orderToEdit, { new: true })

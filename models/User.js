@@ -11,7 +11,8 @@ const UserSchema = new Schema({
     postal_code: { type: Number },
     telephone: { type: Number },
     type: { type: String },
-    password_hash: { type: String, required: true }
+    password_hash: { type: String, required: true },
+    warnings: { type: Number }
 })
 
 UserSchema.set('toJSON', {

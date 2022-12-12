@@ -6,5 +6,5 @@ const connectDb = async () => {
 }
 
 connectDb()
-    .then(result => console.log("Db connected"))
+    .then(result => console.log("DB connected"))
     .catch(err => console.log(err))
