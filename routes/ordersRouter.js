@@ -143,7 +143,8 @@ ordersRouter.post('/', async (req, res, next) => {
 
         if (discount_code) {
             const discountCodeFinded = await DiscountCode.findOne({ "code": discount_code, "used": false })
-            if (discountCodeFinded) {
+            const actualDate = new Date();
+            if (discountCodeFinded && actualDate < discountCodeFinded.due_date) {
                 billing.discount_code = discountCodeFinded.code
                 billing.discount_code_amount = discountCodeFinded.amount
                 totalCost -= discountCodeFinded.amount
