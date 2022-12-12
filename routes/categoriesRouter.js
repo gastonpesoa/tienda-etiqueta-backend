@@ -16,6 +16,32 @@ categoriesRouter.get('/', (req, res, next) => {
         });
 });
 
+categoriesRouter.get('/subcategories', async (req, res, next) => {
+    Category.aggregate([{ $match: {} }, { $project: { _id: 1, name: 1, url: 1 } }])
+        .then(async objs => {
+            if (objs.length > 0) {
+                for (cat of objs) {
+                    let subcategories = await Subcategory.find({ "category._id": cat._id })
+                    let newArray = [];
+                    await subcategories.map(subcat => {
+                        newArray.push({
+                            key: subcat._id,
+                            title: subcat.name,
+                            link: `/products/${cat.url}/${subcat.url}`
+                        })
+                    })
+                    cat.items = []
+                    cat.items.push(...newArray);
+                }
+                
+            }
+            res.json({ success: true, data: objs }).status(200).end();   
+        })
+        .catch(err => {
+            next(err);
+        });
+});
+
 // Traer una categoría por ID
 categoriesRouter.get('/id/:id', (req, res, next) => {
     const id = req.params.id;
