@@ -28,45 +28,90 @@ categoriesRouter.get('/id/:id', (req, res, next) => {
 });
 
 // Agrega una categoría
-categoriesRouter.post('/', (req, res, next) => {
-    const { name, url } = req.body;
-    const newCategory = new Category({ name, url });
-        
-    newCategory.save()
-    .then((obj) => {
-        obj ? res.status(201).send(obj) : res.status(400).send();
-    })
-    .catch((err) => {
-        next(err);
-    });
+categoriesRouter.post('/', async (req, res, next) => {
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin") {
+                const { name, url } = req.body;
+                const newCategory = new Category({ name, url });
+                    
+                newCategory.save()
+                .then((obj) => {
+                    obj ? res.status(201).send(obj) : res.status(400).send();
+                })
+                .catch((err) => {
+                    next(err);
+                });
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
 });
 
 // Actualiza una categoría
-categoriesRouter.put('/id/:id', (req, res, next) => {
-    const { id } = req.params;
-    const { name, url } = req.body;
-    const categoryToEdit = { name, url };
-  
-    Category.findByIdAndUpdate(id, categoryToEdit, { new: true })
-    .then((obj) => {
-        obj ? res.status(200).json(obj) : res.status(404).end();
-    })
-    .catch(err => {
-        next(err);
-    });
+categoriesRouter.put('/id/:id', async (req, res, next) => {
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin") {
+                const { id } = req.params;
+                const { name, url } = req.body;
+                const categoryToEdit = { name, url };
+            
+                Category.findByIdAndUpdate(id, categoryToEdit, { new: true })
+                .then((obj) => {
+                    obj ? res.status(200).json(obj) : res.status(404).end();
+                })
+                .catch(err => {
+                    next(err);
+                });
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
 });
 
 // Elimina una categoría
-categoriesRouter.delete("/id/:id", (req, res, next) => {
-    const { id } = req.params;
-  
-    Category.findByIdAndRemove(id)
-    .then((obj) => {
-        obj ? res.status(200).json(obj) : res.status(404).end();
-    })
-    .catch((err) => {
-        next(err);
-    });
+categoriesRouter.delete("/id/:id", async (req, res, next) => {
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin") {
+                const { id } = req.params;
+            
+                Category.findByIdAndRemove(id)
+                .then((obj) => {
+                    obj ? res.status(200).json(obj) : res.status(404).end();
+                })
+                .catch((err) => {
+                    next(err);
+                });
+            }
+        }
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
 });
 
 module.exports = categoriesRouter;

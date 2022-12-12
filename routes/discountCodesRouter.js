@@ -142,8 +142,6 @@ discountCodesRouter.delete("/id/:id", async (req, res, next) => {
         console.log(error)
         next(error);
     }
-
-
 });
 
 module.exports = discountCodesRouter;
