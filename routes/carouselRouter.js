@@ -78,9 +78,14 @@ carouselRouter.post('/', async (req, res, next) => {
                 let uploadStream = bucket.openUploadStream(fileName, {
                     metadata: { field: 'urlAction', value: urlAction }
                 });
-                fs.pipe(uploadStream)
-
-                res.status(201).json({ success: true }).end()
+                fs.pipe(uploadStream).
+                    on('error', function (error) {
+                        console.log("error", error)
+                        res.json({ success: false, data: error }).status(404).end()
+                    }).
+                    on('finish', function () {
+                        res.status(201).json({ success: true }).end()
+                    });
             }
         }
     } catch (error) {
@@ -91,7 +96,7 @@ carouselRouter.post('/', async (req, res, next) => {
 
 
 carouselRouter.delete('/:id', async (req, res, next) => {
-    const id = req.params.id
+
     const bearerToken = req.headers['authorization']
     if (typeof bearerToken === 'undefined') {
         next({ name: "ErrorToken", message: "No token" })
@@ -99,18 +104,26 @@ carouselRouter.delete('/:id', async (req, res, next) => {
         req.token = bearerToken.split(' ')[1]
         const userData = jwt.verify(req.token, PRIVATE_KEY)
         const userFinded = await User.findById(userData.id)
-        if (userFinded.type === "admin" || userFinded.type === "employee") {
-            // Province.findByIdAndRemove(id)
-            //     .then(province => {
-            //         if (province) {
-            //             res.json({ success: true, data: province }).status(204).end()
-            //         } else {
-            //             res.json({ success: false, data: 'Province not found' }).status(404).end()
-            //         }
-            //     })
-            //     .catch(err => {
-            //         next(err)
-            //     })
+        if (userFinded.type === "admin") {
+
+            try {
+                var imageId = mongoose.Types.ObjectId(req.params.id)
+            } catch (err) {
+                return res.status(400).json({ message: "Invalid id in URL parameter. Must be a single String of 12 bytes or a string of 24 hex characters" });
+            }
+
+            const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+                bucketName: 'carousel'
+            })
+
+            bucket.delete(imageId, (err, result) => {
+                if (err) {
+                    console.log("error", err)
+                    res.json({ success: false, data: 'data not found' }).status(404).end()
+                } else {
+                    res.json({ success: true, data: result }).status(204).end()
+                }
+            })
         }
     }
 })
