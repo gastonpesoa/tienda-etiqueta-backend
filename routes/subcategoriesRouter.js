@@ -1,6 +1,9 @@
+const jwt = require('jsonwebtoken')
+const { PRIVATE_KEY } = require('../utils/config')
 const subcategoriesRouter = require('express').Router();
 const Category = require('../models/Category');
 const Subcategory = require("../models/Subcategory");
+const User = require("../models/User");
 
 subcategoriesRouter.get('/', (req, res, next) => {
     Subcategory.find({})

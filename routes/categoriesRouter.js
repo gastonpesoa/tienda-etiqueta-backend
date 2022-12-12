@@ -1,5 +1,8 @@
+const jwt = require('jsonwebtoken')
+const { PRIVATE_KEY } = require('../utils/config')
 const categoriesRouter = require('express').Router();
 const Category = require("../models/Category");
+const User = require("../models/User");
 
 categoriesRouter.get('/', (req, res, next) => {
     Category.find({})
@@ -98,14 +101,16 @@ categoriesRouter.delete("/id/:id", async (req, res, next) => {
             const userFinded = await User.findById(userData.id)
             if (userFinded.type === "admin") {
                 const { id } = req.params;
+                const category = await Category.findById(id);
+                console.log(category);
             
-                Category.findByIdAndRemove(id)
+                /*Category.findByIdAndRemove(id)
                 .then((obj) => {
                     obj ? res.status(200).json(obj) : res.status(404).end();
                 })
                 .catch((err) => {
                     next(err);
-                });
+                });*/
             }
         }
     } catch (error) {
