@@ -152,4 +152,41 @@ usersRouter.delete('/:id', async (req, res, next) => {
     }
 })
 
+usersRouter.get('/blacklist', async (req, res, next) => {
+    try {
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin" || userFinded.type === "employee") {
+                const users = await User.aggregate([
+                    {
+                        $match: {
+                            $and: [{ warnings: { $gt: 0 } }]
+                        }
+                    },
+                    {
+                        $project: {
+                            _id: 1,
+                            name: 1,
+                            last_name: 1,
+                            email: 1,
+                            type: 1,
+                            warnings: 1
+                        }
+                    }
+                ])
+                res.status(201).json({ success: true, data: users }).end()
+            }
+        }
+
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
 module.exports = usersRouter
