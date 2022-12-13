@@ -37,28 +37,75 @@ productsRouter.get('/', async (req, res, next) => {
 
 productsRouter.get('/all', async (req, res, next) => {
     try {
-        let availableProducts = await Product.aggregate([{
-            $project: {
-                articles: {
-                    $filter: {
-                        input: "$articles",
-                        as: "article"
+        const bearerToken = req.headers['authorization']
+        if (typeof bearerToken === 'undefined') {
+            next({ name: "ErrorToken", message: "No token" })
+        } else {
+            req.token = bearerToken.split(' ')[1]
+            const userData = jwt.verify(req.token, PRIVATE_KEY)
+            const userFinded = await User.findById(userData.id)
+            if (userFinded.type === "admin" || userFinded.type === "employee") {
+                let products = await Product.aggregate([{
+                    $project: {
+                        articles: 1, images: 1, title: 1, category: 1, subcategory: 1, description: 1, detail: 1,
+                        price: 1, brand: 1, color: 1, gender: 1, rating_average: 1, cut: 1, reviews: 1
                     }
-                },
-                images: 1, title: 1, category: 1, subcategory: 1, description: 1, detail: 1,
-                price: 1, brand: 1, color: 1, gender: 1, rating_average: 1, cut: 1, reviews: 1
+                }])
+                if (products) {
+                    res.json({ success: true, data: products }).status(200).end()
+                } else {
+                    res.json({ success: false, data: 'No Products found' }).status(404).end()
+                }
             }
         }
-        ])
-        if (availableProducts) {
-            res.json({ success: true, data: availableProducts }).status(200).end()
-        } else {
-            res.json({ success: false, data: 'Not available Products found' }).status(404).end()
-        }
     } catch (error) {
+        console.log("error", error)
         next(error)
     }
 })
+
+productsRouter.get('/image-docs/:id', async (req, res, next) => {
+    const id = req.params.id
+    const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+        bucketName: 'products'
+    })
+    let docs = []
+    const cursor = await bucket.find({ 'metadata.value': id }).toArray()
+    cursor.forEach(doc => {
+        docs.push(doc)
+    });
+    res.status(201).json({ success: true, data: docs }).end()
+});
+
+productsRouter.get('/image/:id', (req, res) => {
+    try {
+        var imageId = mongoose.Types.ObjectId(req.params.id)
+    } catch (err) {
+        return res.status(400).json({ message: "Invalid id in URL parameter. Must be a single String of 12 bytes or a string of 24 hex characters" });
+    }
+
+    const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+        bucketName: 'products'
+    })
+
+    // temporary variable to hold image
+    var data = [];
+
+    // create the download stream
+    let downloadStream = bucket.openDownloadStream(imageId);
+    downloadStream.on('data', (chunk) => {
+        data.push(chunk);
+    });
+    downloadStream.on('error', async (error) => {
+        console.log(error)
+        next(error)
+    });
+    downloadStream.on('end', async () => {
+        let bufferBase64 = Buffer.concat(data)
+        let base64 = Buffer.from(bufferBase64).toString('base64')
+        res.status(201).json({ success: true, data: base64 }).end()
+    });
+});
 
 productsRouter.post('/', async (req, res, next) => {
     try {
@@ -347,8 +394,7 @@ productsRouter.put('/review', async (req, res, next) => {
 
 productsRouter.put('/id/:id', async (req, res, next) => {
     const { id } = req.params;
-    const { title, categoryId, subcategoryId, brand, color, price, gender, description, detail, cut, articles } = req.body;
-    console.log(new mongoose.Types.ObjectId(id).toString());
+    const { title, categoryId, subcategoryId, brand, color, price, gender, description, detail, cut, articles, files } = req.body;
     try {
         const bearerToken = req.headers['authorization']
         if (typeof bearerToken === 'undefined') {
@@ -358,6 +404,36 @@ productsRouter.put('/id/:id', async (req, res, next) => {
             const userData = jwt.verify(req.token, PRIVATE_KEY)
             const userFinded = await User.findById(userData.id)
             if (userFinded.type === "admin" || userFinded.type === "employee") {
+
+                if (files.length > 0) {
+
+                    const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+                        bucketName: 'products'
+                    })
+
+                    const cursor = await bucket.find({ 'metadata.value': id }).toArray()
+                    cursor.forEach(doc => {
+                        bucket.delete(doc._id, (err, result) => {
+                            if (err) {
+                                console.log("delete error", err)
+                            } else {
+                                console.log("delete result", result)
+                            }
+                        })
+                    })
+
+                    files.map(file => {
+                        let buffer = Buffer.from(file.file.split(',')[1], 'base64')
+                        const fs = new Readable();
+                        fs.push(buffer);
+                        fs.push(null);
+                        let uploadStream = bucket.openUploadStream(file.fileName, {
+                            metadata: { field: 'productId', value: id }
+                        });
+                        fs.pipe(uploadStream)
+                    })
+                }
+
                 const category = await Category.findById(categoryId);
                 const subcategory = await Subcategory.findById(subcategoryId);
                 const formatText = text => text.slice(0, 3).padStart(3, '0').toUpperCase();
@@ -400,6 +476,22 @@ productsRouter.delete("/id/:id", async (req, res, next) => {
             const userData = jwt.verify(req.token, PRIVATE_KEY)
             const userFinded = await User.findById(userData.id)
             if (userFinded.type === "admin" || userFinded.type === "employee") {
+
+                const bucket = new mongoose.mongo.GridFSBucket(mongoose.connection.db, {
+                    bucketName: 'products'
+                })
+
+                const cursor = await bucket.find({ 'metadata.value': id }).toArray()
+                cursor.forEach(doc => {
+                    bucket.delete(doc._id, (err, result) => {
+                        if (err) {
+                            console.log("delete error", err)
+                        } else {
+                            console.log("delete result", result)
+                        }
+                    })
+                })
+
                 Product.findByIdAndRemove(id)
                     .then((obj) => {
                         obj ? res.status(200).json(obj) : res.status(404).end();
