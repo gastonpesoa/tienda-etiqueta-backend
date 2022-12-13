@@ -348,6 +348,26 @@ productsRouter.get('/best/:category', async (req, res, next) => {
     }
 })
 
+productsRouter.get('/best-rated', async (req, res, next) => {
+    const category = req.params.category
+    try {
+        let queryResult = await Product.aggregate([
+            [
+                { $match: { rating_average: { $gt: 0 } } },
+                { $sort: { rating_average: -1 } }
+            ]
+        ])
+        if (queryResult) {
+            res.json({ success: true, data: queryResult }).status(200).end()
+        } else {
+            res.json({ success: false, data: 'Not available Products found' }).status(404).end()
+        }
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
 
 productsRouter.put('/review', async (req, res, next) => {
     const bearerToken = req.headers['authorization']

@@ -75,6 +75,79 @@ ordersRouter.get('/id/:id', (req, res, next) => {
         })
 })
 
+ordersRouter.get('/quantity-by-month/:month', async (req, res, next) => {
+    const month = parseInt(req.params.month)
+
+    var today = new Date();
+    var firstDayOfMonth = new Date(today.getFullYear(), month, 1);
+    var lastDayOfMonth = new Date(today.getFullYear(), month + 1, 0);
+
+    try {
+        const orders = await Order.aggregate([
+            {
+                $match: {
+                    date: {
+                        $gte: firstDayOfMonth,
+                        $lt: lastDayOfMonth
+                    }
+                }
+            },
+            {
+                $project: {
+                    "user._id": 1,
+                    date: 1,
+                    "billing.total_cost": 1
+                }
+            }
+        ])
+        res.status(201).json({ success: true, data: orders }).end()
+
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
+ordersRouter.get('/avg-sales-by-month/:month', async (req, res, next) => {
+    const month = parseInt(req.params.month)
+
+    var today = new Date();
+    var firstDayOfMonth = new Date(today.getFullYear(), month, 1);
+    var lastDayOfMonth = new Date(today.getFullYear(), month + 1, 0);
+
+    try {
+        const orders = await Order.aggregate([
+            {
+                $match: {
+                    date: {
+                        $gte: firstDayOfMonth,
+                        $lt: lastDayOfMonth
+                    }
+                }
+            },
+            {
+                $project: {
+                    "user._id": 1,
+                    date: 1,
+                    "billing.total_cost": 1
+                }
+            },
+            {
+                $group:
+                {
+                    _id: null,
+                    salesAvg: { $avg: "$billing.total_cost" }
+                }
+            },
+        ])
+        res.status(201).json({ success: true, data: orders }).end()
+
+    } catch (error) {
+        console.log(error)
+        next(error)
+    }
+})
+
 ordersRouter.post('/', async (req, res, next) => {
     try {
 
@@ -239,14 +312,14 @@ ordersRouter.put('/state/:id', async (req, res, next) => {
                     }
                     user.save();
                 }
-            
+
                 Order.findByIdAndUpdate(id, orderToEdit, { new: true })
-                .then((obj) => {
-                    obj ? res.status(200).json(obj) : res.status(404).end();
-                })
-                .catch(err => {
-                    next(err);
-                });
+                    .then((obj) => {
+                        obj ? res.status(200).json(obj) : res.status(404).end();
+                    })
+                    .catch(err => {
+                        next(err);
+                    });
             }
         }
     } catch (error) {
